@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkStorer - AI Knowledge Assistant & Vault Manager</title>
+  <meta name="description" content="AI Knowledge Assistant with RAG Architecture for Personal Knowledge Vaults. Never hallucinates. Instant learning roadmaps, quizzes, and vault controls.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="brand-icon">⚡</span>
+          <span class="brand-text">Jarvis <small>AI</small></span>
+        </div>
+        <button class="btn-icon" id="theme-toggle" title="Toggle Light/Dark Mode">🌙</button>
+      </div>
+
+      <button class="btn-new-chat" id="btn-new-chat">
+        <span>+</span> New Chat
+      </button>
+
+      <!-- Sidebar View Navigation -->
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="chat">
+          <span class="nav-icon">💬</span> Jarvis Chat
+        </button>
+        <button class="nav-item" data-view="vault">
+          <span class="nav-icon">📚</span> Vault Resources
+        </button>
+        <button class="nav-item" data-view="graph">
+          <span class="nav-icon">🕸️</span> Knowledge Graph
+        </button>
+        <button class="nav-item" data-view="quiz">
+          <span class="nav-icon">🧩</span> Quiz Mode
+        </button>
+        <button class="nav-item" data-view="insights">
+          <span class="nav-icon">📊</span> AI Insights
+        </button>
+        <button class="nav-item" data-view="voicesettings">
+          <span class="nav-icon">⚙️</span> Voice Settings
+        </button>
+      </nav>
+
+      <!-- Chat History Section -->
+      <div class="chat-history-section">
+        <div class="section-title">
+          <span>Previous Chats</span>
+        </div>
+        <div class="search-history-box">
+          <input type="text" id="history-search-input" placeholder="Search chats...">
+        </div>
+        <div class="chat-history-list" id="chat-history-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Vault Stats Footer -->
+      <div class="sidebar-footer">
+        <div class="rag-status-indicator">
+          <span class="status-dot"></span>
+          <span>RAG Vault Strict Mode (Active)</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+      <!-- TOP HEADER BAR -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="btn-icon drawer-toggle" id="drawer-toggle">☰</button>
+          <h2 class="view-title" id="view-title">Jarvis AI</h2>
+          
+          <div class="voice-status-indicator" id="voice-status" style="margin-left: 20px;">
+            <span class="mic-icon">🎤</span> <span class="status-text">Voice Idle</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="vault-badge" id="vault-count-badge">
+            📚 10 Saved Items
+          </div>
+          <button class="btn-primary" id="btn-add-resource-modal">+ Add Resource</button>
+        </div>
+      </header>
+
+      <!-- VIEW CONTAINER: CHAT -->
+      <section class="view-container active" id="view-chat">
+        <div class="chat-wrapper">
+          <!-- Messages Scroll Box -->
+          <div class="chat-messages-container" id="chat-messages-container">
+            <!-- Messages populated by ChatUI -->
+          </div>
+
+          <!-- Chat Input Area -->
+          <div class="chat-input-area">
+            <!-- Shortcut Quick Prompt Chips -->
+            <div class="quick-prompts-bar">
+              <button class="prompt-chip" data-prompt="Show me every FastAPI resource.">⚡ FastAPI Resources</button>
+              <button class="prompt-chip" data-prompt="I want to learn Docker">🐳 Learn Docker</button>
+              <button class="prompt-chip" data-prompt="Teach me backend">💻 Teach Backend</button>
+              <button class="prompt-chip" data-prompt="Explain JWT using resources I've saved.">🔐 Explain JWT</button>
+              <button class="prompt-chip" data-prompt="Which resources haven't I opened recently?">⌛ Ignored Items</button>
+              <button class="prompt-chip" data-prompt="Compare FastAPI and PostgreSQL resources">⚖️ Compare Resources</button>
+            </div>
+
+            <!-- Input Box Form -->
+            <form class="chat-form" id="chat-form">
+              <textarea 
+                id="chat-input" 
+                placeholder="Ask Jarvis or type 'Save this https://...' to store a link..." 
+                rows="1" 
+                required
+              ></textarea>
+              <button type="button" class="btn-voice" id="btn-voice" title="Voice Command">🎤</button>
+              <button type="submit" class="btn-send" id="btn-send" title="Send Message">
+                <span>Send</span> ➔
+              </button>
+            </form>
+            <div class="input-disclaimer">
+              🔒 RAG Vault Protection Enabled. Answers derived strictly from your saved resources.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW CONTAINER: KNOWLEDGE VAULT -->
+      <section class="view-container" id="view-vault">
+        <div class="vault-page-wrapper">
+          <div class="vault-toolbar">
+            <div class="vault-search-box">
+              <input type="text" id="vault-filter-input" placeholder="Filter resources by title, tag, category, or url...">
+            </div>
+            <div class="vault-filter-tabs">
+              <button class="filter-tab active" data-filter="all">All Items</button>
+              <button class="filter-tab" data-filter="favorite">⭐ Favorites</button>
+              <button class="filter-tab" data-filter="article">📄 Articles</button>
+              <button class="filter-tab" data-filter="video">▶️ Videos</button>
+              <button class="filter-tab" data-filter="repository">🐙 GitHub</button>
+              <button class="filter-tab" data-filter="archived">📦 Archived</button>
+            </div>
+          </div>
+          <div class="vault-cards-grid" id="vault-cards-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW CONTAINER: KNOWLEDGE GRAPH -->
+      <section class="view-container" id="view-graph">
+        <div class="graph-page-wrapper">
+          <div class="graph-header">
+            <h3>🕸️ Knowledge Graph & Topic Dependencies</h3>
+            <p>Visual map of relationships between your saved topics and recommended next steps.</p>
+          </div>
+          <div class="graph-canvas-container" id="graph-canvas-container">
+            <!-- Dynamic Graph Nodes -->
+          </div>
+          <div class="graph-missing-steps" id="graph-missing-steps">
+            <!-- Missing Learning Steps -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW CONTAINER: QUIZ MODE -->
+      <section class="view-container" id="view-quiz">
+        <div class="quiz-page-wrapper">
+          <div class="quiz-header">
+            <h3>🧩 AI Quiz & Active Recall Runner</h3>
+            <p>Test your retention of saved topics with generated MCQs and flashcards.</p>
+          </div>
+          <div class="quiz-runner-container" id="quiz-runner-container">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW CONTAINER: AI INSIGHTS -->
+      <section class="view-container" id="view-insights">
+        <div class="insights-page-wrapper">
+          <div class="insights-header">
+            <h3>📊 AI Analytics & Weekly Review</h3>
+            <p>Vault stats, top domains, ignored resources, and consistency insights.</p>
+          </div>
+          <div class="insights-grid" id="insights-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+      <!-- VIEW CONTAINER: VOICE SETTINGS -->
+      <section class="view-container" id="view-voicesettings">
+        <div class="insights-page-wrapper">
+          <div class="insights-header">
+            <h3>⚙️ Voice & Assistant Settings</h3>
+            <p>Configure how Jarvis listens and speaks.</p>
+          </div>
+          <div class="settings-form" style="max-width: 600px; padding: 20px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+              <input type="checkbox" id="setting-voice-enabled" checked style="width: 20px; height: 20px;">
+              <label for="setting-voice-enabled" style="margin: 0; font-size: 1.1rem;">Enable Voice Assistant</label>
+            </div>
+            
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+              <input type="checkbox" id="setting-always-listen" style="width: 20px; height: 20px;">
+              <div>
+                <label for="setting-always-listen" style="margin: 0; display: block; font-weight: 600;">Always Listening Mode</label>
+                <small style="color: var(--text-muted);">Keeps microphone active continuously to detect Wake Word.</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Wake Word</label>
+              <input type="text" id="setting-wake-word" value="Hey Jarvis">
+            </div>
+
+            <div class="form-group">
+              <label>Voice (Requires page interaction first)</label>
+              <select id="setting-voice-select">
+                <option value="">Default System Voice</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 20px;">
+              <div style="flex: 1;">
+                <label>Speaking Speed: <span id="val-speed">1.0</span>x</label>
+                <input type="range" id="setting-speed" min="0.5" max="2.0" step="0.1" value="1.0" style="width: 100%;">
+              </div>
+              <div style="flex: 1;">
+                <label>Pitch: <span id="val-pitch">1.0</span></label>
+                <input type="range" id="setting-pitch" min="0.1" max="2.0" step="0.1" value="1.0" style="width: 100%;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ADD RESOURCE MODAL -->
+  <div class="modal-overlay" id="add-resource-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Save New Resource</h3>
+        <button class="btn-close-modal" id="btn-close-add-modal">✕</button>
+      </div>
+      <form id="add-resource-form">
+        <div class="form-group">
+          <label>Resource URL *</label>
+          <input type="url" id="add-url" placeholder="https://..." required>
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="add-title" placeholder="Auto-generated if left empty">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="add-category">
+            <option value="Backend">Backend</option>
+            <option value="DevOps">DevOps</option>
+            <option value="Database">Database</option>
+            <option value="Security">Security</option>
+            <option value="Frontend">Frontend</option>
+            <option value="Artificial Intelligence">Artificial Intelligence</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Purpose</label>
+          <input type="text" id="add-purpose" placeholder="Why are you saving this link?">
+        </div>
+        <div class="form-group">
+          <label>Tags (comma separated)</label>
+          <input type="text" id="add-tags" placeholder="FastAPI, Authentication, Python">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-cancel-add">Cancel</button>
+          <button type="submit" class="btn-primary">Save to Vault</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT RESOURCE MODAL -->
+  <div class="modal-overlay" id="edit-resource-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Resource</h3>
+        <button class="btn-close-modal" id="btn-close-edit-modal">✕</button>
+      </div>
+      <form id="edit-resource-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label>Resource URL *</label>
+          <input type="url" id="edit-url" required>
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="edit-title">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="edit-category">
+        </div>
+        <div class="form-group">
+          <label>Purpose</label>
+          <input type="text" id="edit-purpose">
+        </div>
+        <div class="form-group">
+          <label>Tags (comma separated)</label>
+          <input type="text" id="edit-tags">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-cancel-edit">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- RESOURCE DETAILS MODAL -->
+  <div class="modal-overlay" id="details-modal">
+    <div class="modal-card modal-lg" id="details-modal-content">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
