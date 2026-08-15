@@ -382,6 +382,19 @@ export class RAGEngine {
   detectVaultCommand(query) {
     const lower = query.toLowerCase().trim();
 
+    // 0. GREETINGS HANDLER
+    if (lower === "hii" || lower === "hi" || lower === "hello" || lower === "hey" || lower === "hello jarvis" || lower === "hi jarvis" || lower === "hey jarvis") {
+      return {
+        text: "Hello master, I am Jarvis. How may I help you?",
+        followUps: [
+          "Show all saved resources",
+          "Teach me backend",
+          "I want to learn Docker",
+          "Explain JWT using resources I've saved."
+        ]
+      };
+    }
+
     // 1. HELP MODE / SMART ERROR HANDLING
     if (lower === "help" || lower === "what can you do" || lower === "options") {
       return {
