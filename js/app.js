@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnVoice = document.getElementById("btn-voice");
   const voiceStatus = document.getElementById("voice-status");
   const voiceStatusText = voiceStatus?.querySelector(".status-text");
+  const btnMuteToggle = document.getElementById("btn-mute-toggle");
 
   // Vault Elements
   const vaultCountBadge = document.getElementById("vault-count-badge");
@@ -157,6 +158,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const setSpeed = document.getElementById("setting-speed");
   const setPitch = document.getElementById("setting-pitch");
 
+  // Mute button logic
+  function updateMuteButtonState() {
+    if (!btnMuteToggle) return;
+    const isEnabled = voiceEngine.settings.enabled;
+    btnMuteToggle.innerText = isEnabled ? "🔊" : "🔇";
+    btnMuteToggle.title = isEnabled ? "Mute Jarvis" : "Unmute Jarvis";
+  }
+
+  if (btnMuteToggle) {
+    updateMuteButtonState();
+    btnMuteToggle.addEventListener("click", () => {
+      const nextEnabled = !voiceEngine.settings.enabled;
+      voiceEngine.saveSettings({ enabled: nextEnabled });
+      updateMuteButtonState();
+      if (setEnabled) {
+        setEnabled.checked = nextEnabled;
+      }
+      showToast(nextEnabled ? "Jarvis voice enabled." : "Jarvis voice muted.");
+      if (!nextEnabled && voiceEngine.isSpeaking) {
+        voiceEngine.stopSpeaking();
+      }
+    });
+  }
+
   if (setEnabled) {
     setEnabled.checked = voiceEngine.settings.enabled;
     setAlwaysListen.checked = voiceEngine.settings.alwaysListening;
@@ -164,7 +189,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setSpeed.value = voiceEngine.settings.speed;
     setPitch.value = voiceEngine.settings.pitch;
 
-    setEnabled.addEventListener("change", (e) => voiceEngine.saveSettings({ enabled: e.target.checked }));
+    setEnabled.addEventListener("change", (e) => {
+      voiceEngine.saveSettings({ enabled: e.target.checked });
+      updateMuteButtonState();
+      if (!e.target.checked && voiceEngine.isSpeaking) {
+        voiceEngine.stopSpeaking();
+      }
+    });
     setAlwaysListen.addEventListener("change", (e) => voiceEngine.toggleAlwaysListening(e.target.checked));
     setWakeWord.addEventListener("change", (e) => voiceEngine.saveSettings({ wakeWord: e.target.value }));
     setVoice.addEventListener("change", (e) => voiceEngine.saveSettings({ voiceURI: e.target.value }));
