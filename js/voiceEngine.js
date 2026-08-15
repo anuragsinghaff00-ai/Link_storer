@@ -162,6 +162,7 @@ export class VoiceEngine {
       .replace(/[#*_~`]/g, "")
       .replace(/🟢|🟡|🔴|⚪|🗑️|⭐|🔗|📋|ℹ️/g, "")
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Extract link text
+      .replace(/https?:\/\/\S+/gi, "") // Remove raw URLs (don't spell them out)
       .trim();
 
     if (!cleanText) return;

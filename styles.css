@@ -1302,3 +1302,9 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
+.vault-card.is-deleted {
+  border-left: 4px solid #ef4444 !important;
+  opacity: 0.85;
+}
+

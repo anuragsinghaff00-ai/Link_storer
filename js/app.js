@@ -48,6 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const detailsModal = document.getElementById("details-modal");
   const detailsModalContent = document.getElementById("details-modal-content");
+  const binCardsGrid = document.getElementById("bin-cards-grid");
+  const btnEmptyBin = document.getElementById("btn-empty-bin");
 
   // State
   let currentView = "chat";
@@ -258,7 +260,8 @@ document.addEventListener("DOMContentLoaded", () => {
       graph: "Knowledge Graph & Topic Dependencies",
       quiz: "AI Quiz & Active Recall Runner",
       insights: "AI Analytics & Weekly Review",
-      voicesettings: "Voice & Assistant Settings"
+      voicesettings: "Voice & Assistant Settings",
+      bin: "Recycle Bin"
     };
 
     viewTitle.innerText = titles[viewName] || "AI Assistant";
@@ -267,6 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (viewName === "graph") renderKnowledgeGraph();
     if (viewName === "quiz") renderQuizRunner();
     if (viewName === "insights") renderAIInsights();
+    if (viewName === "bin") renderBinGrid();
   }
 
   function renderVaultBadge() {
@@ -513,7 +517,49 @@ document.addEventListener("DOMContentLoaded", () => {
           cardEl.style.opacity = "0";
           setTimeout(() => cardEl.remove(), 250);
         }
-        showToast(`Deleted "${res.title}" from vault.`);
+        showToast(`Moved "${res.title}" to Recycle Bin.`);
+      }
+    }
+
+    // Card Action: Restore Link
+    const restoreBtn = e.target.closest(".btn-restore");
+    if (restoreBtn) {
+      const resId = restoreBtn.dataset.id;
+      const res = vaultStore.getById(resId);
+      if (res) {
+        vaultStore.restore(resId);
+        renderVaultBadge();
+        if (currentView === "bin") renderBinGrid();
+        
+        // Remove card element from DOM visually
+        const cardEl = restoreBtn.closest(".vault-card");
+        if (cardEl) {
+          cardEl.style.transform = "scale(0.9)";
+          cardEl.style.opacity = "0";
+          setTimeout(() => cardEl.remove(), 250);
+        }
+        showToast(`Restored "${res.title}" to vault.`);
+      }
+    }
+
+    // Card Action: Delete Link Permanently
+    const deletePermanentBtn = e.target.closest(".btn-delete-permanent");
+    if (deletePermanentBtn) {
+      const resId = deletePermanentBtn.dataset.id;
+      const res = vaultStore.getById(resId);
+      if (res && confirm(`Are you sure you want to permanently delete "${res.title}"?`)) {
+        vaultStore.deletePermanently(resId);
+        renderVaultBadge();
+        if (currentView === "bin") renderBinGrid();
+        
+        // Remove card element from DOM visually
+        const cardEl = deletePermanentBtn.closest(".vault-card");
+        if (cardEl) {
+          cardEl.style.transform = "scale(0.9)";
+          cardEl.style.opacity = "0";
+          setTimeout(() => cardEl.remove(), 250);
+        }
+        showToast(`Permanently deleted "${res.title}".`);
       }
     }
 
@@ -631,6 +677,23 @@ document.addEventListener("DOMContentLoaded", () => {
     chatUI.sendMessage(`Save this ${url}`, chatMessagesContainer, () => renderChatHistory());
     switchView("chat");
   });
+
+  // --- EMPTY BIN EVENT ---
+  if (btnEmptyBin) {
+    btnEmptyBin.addEventListener("click", () => {
+      const itemsCount = vaultStore.getDeleted().length;
+      if (itemsCount === 0) {
+        showToast("Recycle Bin is already empty.");
+        return;
+      }
+      if (confirm(`Are you sure you want to permanently delete all ${itemsCount} item(s) in the Recycle Bin? This action cannot be undone.`)) {
+        vaultStore.emptyBin();
+        renderBinGrid();
+        renderVaultBadge();
+        showToast("Recycle Bin emptied.");
+      }
+    });
+  }
 
   // --- EDIT RESOURCE MODAL ---
   const editResourceModal = document.getElementById("edit-resource-modal");
@@ -846,5 +909,58 @@ document.addEventListener("DOMContentLoaded", () => {
         <p style="font-size: 0.8rem; color: var(--text-muted);">${insights.answers.whatAmIIgnoring}</p>
       </div>
     `;
+  }
+
+  // --- RECYCLE BIN RENDERER ---
+  function renderBinGrid() {
+    if (!binCardsGrid) return;
+    binCardsGrid.innerHTML = "";
+    const items = vaultStore.getDeleted();
+
+    if (items.length === 0) {
+      binCardsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+        Recycle Bin is empty.
+      </div>`;
+      return;
+    }
+
+    items.forEach(res => {
+      const card = createBinCardElement(res);
+      binCardsGrid.appendChild(card);
+    });
+  }
+
+  function createBinCardElement(res) {
+    const card = document.createElement("div");
+    card.className = "vault-card is-deleted";
+    card.dataset.id = res.id;
+
+    const formattedDate = new Date(res.dateAdded).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="website-badge">
+          <span class="website-icon">${res.favicon || "🔗"}</span>
+          <span class="website-name">${res.websiteName}</span>
+        </div>
+        <div class="card-media-type">${res.mediaType.toUpperCase()}</div>
+      </div>
+      <h4 class="card-title">
+        <span style="color: var(--text-muted); text-decoration: line-through;">${chatUI.escapeHtml(res.title)}</span>
+      </h4>
+      <p class="card-summary">${chatUI.escapeHtml(res.summary)}</p>
+      <div class="card-footer">
+        <span class="card-date">📅 Deleted item</span>
+        <div class="card-actions">
+          <button class="btn-card-action btn-restore" data-id="${res.id}" title="Restore Link" style="background: var(--accent-primary); border-color: var(--accent-primary); color: white;">↩️ Restore</button>
+          <button class="btn-card-action btn-delete-permanent" data-id="${res.id}" title="Delete Permanently" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">🗑️ Delete Permanently</button>
+        </div>
+      </div>
+    `;
+    return card;
   }
 });

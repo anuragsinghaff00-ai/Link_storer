@@ -241,7 +241,7 @@ class VaultStore {
   }
 
   getAll() {
-    return this.resources;
+    return this.resources.filter(r => !r.isDeleted);
   }
 
   getById(id) {
@@ -264,6 +264,7 @@ class VaultStore {
       lastOpened: new Date().toISOString(),
       isFavorite: Boolean(resource.isFavorite),
       isArchived: Boolean(resource.isArchived),
+      isDeleted: false,
       difficulty: resource.difficulty || "Intermediate",
       length: resource.length || "5 min read",
       quality: resource.quality || "High",
@@ -289,6 +290,24 @@ class VaultStore {
   }
 
   delete(id) {
+    const updated = this.update(id, { isDeleted: true });
+    return !!updated;
+  }
+
+  getDeleted() {
+    return this.resources.filter(r => r.isDeleted);
+  }
+
+  restore(id) {
+    return this.update(id, { isDeleted: false });
+  }
+
+  emptyBin() {
+    this.resources = this.resources.filter(r => !r.isDeleted);
+    this.saveToStorage(this.resources);
+  }
+
+  deletePermanently(id) {
     const initialLen = this.resources.length;
     this.resources = this.resources.filter(res => res.id !== id);
     this.saveToStorage(this.resources);
