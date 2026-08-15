@@ -383,7 +383,7 @@ export class RAGEngine {
     const lower = query.toLowerCase().trim();
 
     // 0. GREETINGS HANDLER
-    if (lower === "hii" || lower === "hi" || lower === "hello" || lower === "hey" || lower === "hello jarvis" || lower === "hi jarvis" || lower === "hey jarvis") {
+    if (/^(hi|hii|hello|hey|helo)\s*(jarvis|harvis)?$/i.test(lower)) {
       return {
         text: "Hello master, I am Jarvis. How may I help you?",
         followUps: [
