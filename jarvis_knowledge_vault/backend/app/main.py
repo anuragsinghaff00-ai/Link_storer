@@ -4,6 +4,11 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from app.api.routers import images, image_ai, resources, jarvis
+from app.core.database import engine
+from app.models import Base
+
+# Auto-create tables for Vercel/ephemeral deployments
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Jarvis Knowledge Vault API",
@@ -21,7 +26,10 @@ app.add_middleware(
 )
 
 # Ensure upload directory exists in data folder
-data_upload_dir = os.path.join(os.path.dirname(__file__), "..", "data", "uploads", "images")
+if os.environ.get("VERCEL") == "1":
+    data_upload_dir = "/tmp/uploads/images"
+else:
+    data_upload_dir = os.path.join(os.path.dirname(__file__), "..", "data", "uploads", "images")
 os.makedirs(data_upload_dir, exist_ok=True)
 app.mount("/static/images", StaticFiles(directory=data_upload_dir), name="images")
 
@@ -41,7 +49,10 @@ def health_check():
 
 @app.get("/")
 def read_root():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    if os.path.exists(os.path.join(FRONTEND_DIR, "index.html")):
+        return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    return {"message": "API is running"}
 
 # Mount the entire frontend directory for static assets (js, css)
-app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+if os.path.exists(os.path.join(FRONTEND_DIR, "index.html")):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")

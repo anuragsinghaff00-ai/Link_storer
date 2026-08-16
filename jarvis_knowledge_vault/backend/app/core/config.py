@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         # Fallback to SQLite so it runs instantly without Docker/Postgres
         import os
+        if os.environ.get("VERCEL") == "1":
+            return "sqlite:////tmp/jarvis_vault.db"
+            
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         data_dir = os.path.join(base_dir, "data")
         os.makedirs(data_dir, exist_ok=True)
