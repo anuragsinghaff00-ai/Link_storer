@@ -9,6 +9,7 @@ router = APIRouter(
     tags=["resources"],
 )
 
+@router.get("")
 @router.get("/")
 def get_all_resources(db: Session = Depends(get_db)):
     """Fetch all resources from the vault."""
@@ -39,6 +40,7 @@ def get_all_resources(db: Session = Depends(get_db)):
         for r in resources
     ]
 
+@router.post("")
 @router.post("/")
 def create_resource(data: Dict[str, Any], db: Session = Depends(get_db)):
     """Add a new resource to the vault."""

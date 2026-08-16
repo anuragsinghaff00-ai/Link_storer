@@ -20,6 +20,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Mock user for now since auth might not be fully implemented
 MOCK_USER_ID = "mock_user_123"
 
+@router.get("")
 @router.get("/", response_model=List[ImageResponse])
 def get_images(
     purpose_id: Optional[str] = None,
@@ -34,6 +35,7 @@ def get_images(
         
     return query.order_by(desc(Image.date_added)).all()
 
+@router.post("")
 @router.post("/", response_model=ImageResponse)
 def upload_image(
     file: UploadFile = File(...),
