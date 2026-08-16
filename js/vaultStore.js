@@ -37,8 +37,8 @@ class VaultStore {
       });
       if (response.ok) {
         const newRes = await response.json();
-        // Optimistically update local array
-        this.resources.unshift({ ...resourceData, id: newRes.id });
+        // Optimistically update local array with defaults
+        this.resources.unshift({ mediaType: "article", ...resourceData, ...newRes });
         return newRes;
       }
     } catch (e) {

@@ -342,7 +342,7 @@ export class ChatUI {
           <span class="website-icon">${res.favicon || "🔗"}</span>
           <span class="website-name">${res.websiteName}</span>
         </div>
-        <div class="card-media-type">${res.mediaType.toUpperCase()}</div>
+        <div class="card-media-type">${(res.mediaType || "website").toUpperCase()}</div>
       </div>
       <h4 class="card-title">
         <a href="${res.url}" target="_blank" rel="noopener noreferrer">${this.escapeHtml(res.title)}</a>
