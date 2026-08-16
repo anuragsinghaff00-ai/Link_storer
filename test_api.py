@@ -11,9 +11,9 @@ def test_image_vault():
     try:
         r = requests.get("http://localhost:8000/health")
         assert r.status_code == 200, f"Health check failed: {r.status_code}"
-        print("✅ Health check passed")
+        print("[SUCCESS] Health check passed")
     except Exception as e:
-        print("❌ Health check failed:", e)
+        print("[FAIL] Health check failed:", e)
         return
         
     # 2. Upload an image
@@ -32,13 +32,13 @@ def test_image_vault():
         r = requests.post(f"{base_url}/images/", files=files, data=data)
         assert r.status_code == 200, f"Upload failed: {r.status_code} - {r.text}"
         img_data = r.json()
-        print("✅ Image uploaded successfully")
+        print("[SUCCESS] Image uploaded successfully")
         print(f"   ID: {img_data['id']}")
         print(f"   Path: {img_data['storage_path']}")
         
         image_id = img_data['id']
     except Exception as e:
-        print("❌ Image upload failed:", e)
+        print("[FAIL] Image upload failed:", e)
         return
         
     # 3. Trigger AI Analysis
@@ -47,11 +47,11 @@ def test_image_vault():
         r = requests.post(f"{base_url}/images/{image_id}/analyze")
         assert r.status_code == 200, f"Analysis failed: {r.status_code} - {r.text}"
         ai_data = r.json()
-        print("✅ AI Analysis triggered successfully")
+        print("[SUCCESS] AI Analysis triggered successfully")
         print(f"   Description: {ai_data['data']['description']}")
         print(f"   OCR Text: {ai_data['data']['ocr_text']}")
     except Exception as e:
-        print("❌ AI Analysis failed:", e)
+        print("[FAIL] AI Analysis failed:", e)
         return
         
     # 4. Fetch Images list
@@ -60,14 +60,14 @@ def test_image_vault():
         r = requests.get(f"{base_url}/images/")
         assert r.status_code == 200, f"Fetch failed: {r.status_code}"
         images = r.json()
-        print("✅ Images fetched successfully")
+        print("[SUCCESS] Images fetched successfully")
         print(f"   Found {len(images)} images in vault")
         assert any(i['id'] == image_id for i in images), "Uploaded image not in grid!"
     except Exception as e:
-        print("❌ Image fetch failed:", e)
+        print("[FAIL] Image fetch failed:", e)
         return
         
-    print("\n🎉 ALL TEST CASES PASSED!")
+    print("\n[SUCCESS] ALL TEST CASES PASSED!")
 
 if __name__ == "__main__":
     test_image_vault()

@@ -35,13 +35,13 @@ FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 
 from fastapi.responses import FileResponse
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.get("/")
 def read_root():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 # Mount the entire frontend directory for static assets (js, css)
 app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}

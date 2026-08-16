@@ -9,16 +9,16 @@ def test_unified_deployment():
     assert r.status_code == 200, f"Root failed: {r.status_code}"
     assert "text/html" in r.headers['Content-Type'], "Root did not return HTML"
     assert "Jarvis AI" in r.text or "LinkStorer" in r.text, "Root did not return correct index.html"
-    print("✅ Root serves index.html")
+    print("[SUCCESS] Root serves index.html")
     
     # 2. Check if static CSS is available
     print("Testing GET /styles.css ...")
     r = requests.get("http://localhost:8000/styles.css")
     assert r.status_code == 200, f"CSS failed: {r.status_code}"
     assert "text/css" in r.headers.get('Content-Type', ''), "CSS did not return proper content type"
-    print("✅ Static CSS is served correctly")
+    print("[SUCCESS] Static CSS is served correctly")
 
-    print("\n🎉 UNIFIED DEPLOYMENT TESTS PASSED!")
+    print("\n[SUCCESS] UNIFIED DEPLOYMENT TESTS PASSED!")
 
 if __name__ == "__main__":
     test_unified_deployment()
