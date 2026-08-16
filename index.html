@@ -37,6 +37,9 @@
         <button class="nav-item" data-view="graph">
           <span class="nav-icon">🕸️</span> Knowledge Graph
         </button>
+        <button class="nav-item" data-view="image-vault">
+          <span class="nav-icon">🖼️</span> Image Vault
+        </button>
         <button class="nav-item" data-view="quiz">
           <span class="nav-icon">🧩</span> Quiz Mode
         </button>
@@ -152,6 +155,31 @@
           </div>
           <div class="vault-cards-grid" id="vault-cards-grid">
             <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW CONTAINER: IMAGE VAULT -->
+      <section class="view-container" id="view-image-vault">
+        <div class="vault-page-wrapper" style="padding: 20px;">
+          <div class="vault-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>🖼️ Image Vault</h3>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="image-vault-search" placeholder="Search images..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main);">
+              <button class="btn-primary" id="btn-add-image">Upload Image</button>
+            </div>
+          </div>
+          
+          <div class="vault-filter-tabs" style="margin-bottom: 20px;">
+            <button class="filter-tab active" data-img-filter="all">All Images</button>
+            <button class="filter-tab" data-img-filter="wallpaper">Wallpapers</button>
+            <button class="filter-tab" data-img-filter="ui">UI Design</button>
+            <button class="filter-tab" data-img-filter="diagram">Diagrams</button>
+          </div>
+
+          <!-- Masonry Grid CSS will be needed in styles.css -->
+          <div class="image-masonry-grid" id="image-vault-grid" style="column-count: 3; column-gap: 16px;">
+            <!-- Images populated by imageVault.js -->
           </div>
         </div>
       </section>
@@ -303,6 +331,41 @@
     </div>
   </div>
 
+  <!-- ADD IMAGE MODAL -->
+  <div class="modal-overlay" id="add-image-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Upload to Image Vault</h3>
+        <button class="btn-close-modal" id="btn-close-image-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="drop-zone" class="drop-zone" style="border: 2px dashed var(--border-highlight); border-radius: var(--radius-md); padding: 30px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: background 0.2s;">
+          <div style="font-size: 2rem; margin-bottom: 10px;">📸</div>
+          <div style="font-weight: 600; margin-bottom: 5px;">Drag & Drop Images Here</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">or click to browse device, or paste from clipboard (Ctrl+V)</div>
+          <input type="file" id="image-file-input" accept="image/*" multiple style="display: none;">
+        </div>
+        
+        <div class="form-group" style="position: relative; margin-bottom: 20px;">
+          <div style="text-align: center; margin-bottom: 10px; color: var(--text-muted); font-size: 0.85rem;">— OR —</div>
+          <label>Paste Image URL</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="url" id="image-url-input" placeholder="https://..." style="flex: 1;">
+            <button class="btn-secondary" id="btn-upload-url">Upload URL</button>
+          </div>
+        </div>
+
+        <div id="upload-preview-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+          <!-- Previews go here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-cancel-image">Cancel</button>
+        <button type="button" class="btn-primary" id="btn-submit-images" disabled>Upload <span id="upload-count"></span></button>
+      </div>
+    </div>
+  </div>
+
   <!-- EDIT RESOURCE MODAL -->
   <div class="modal-overlay" id="edit-resource-modal">
     <div class="modal-card">
@@ -347,6 +410,7 @@
     </div>
   </div>
 
+  <script type="module" src="js/imageVault.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: jarvis-vault
+    env: python
+    rootDir: jarvis_knowledge_vault/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/jarvis_knowledge_vault/backend/data
+      sizeGB: 1
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false

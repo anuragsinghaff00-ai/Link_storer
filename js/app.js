@@ -214,9 +214,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZATION ---
   initTheme();
-  renderVaultBadge();
-  renderChatHistory();
-  renderActiveChatSession();
+  
+  // Fetch initial data from backend
+  vaultStore.fetchAll().then(() => {
+    renderVaultBadge();
+    renderChatHistory();
+    renderActiveChatSession();
+  });
 
   // --- THEME ENGINE ---
   function initTheme() {
@@ -257,6 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const titles = {
       chat: "AI Knowledge Assistant",
       vault: "Vault Resource Library",
+      "image-vault": "Image Vault",
       graph: "Knowledge Graph & Topic Dependencies",
       quiz: "AI Quiz & Active Recall Runner",
       insights: "AI Analytics & Weekly Review",
@@ -267,6 +272,9 @@ document.addEventListener("DOMContentLoaded", () => {
     viewTitle.innerText = titles[viewName] || "AI Assistant";
 
     if (viewName === "vault") renderVaultGrid();
+    if (viewName === "image-vault") {
+      if (window.imageVault) window.imageVault.renderGrid();
+    }
     if (viewName === "graph") renderKnowledgeGraph();
     if (viewName === "quiz") renderQuizRunner();
     if (viewName === "insights") renderAIInsights();
@@ -649,7 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnCloseAddModal.addEventListener("click", () => addResourceModal.classList.remove("active"));
   btnCancelAdd.addEventListener("click", () => addResourceModal.classList.remove("active"));
 
-  addResourceForm.addEventListener("submit", (e) => {
+  addResourceForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const url = document.getElementById("add-url").value;
     const title = document.getElementById("add-title").value;
@@ -659,7 +667,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : ["Saved"];
 
-    const newRes = vaultStore.add({
+    const newRes = await vaultStore.add({
       title: title || "New Saved Resource",
       url: url,
       category: category,

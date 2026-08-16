@@ -114,7 +114,7 @@ export class ChatUI {
     // 2. Process query via RAG Engine
     this.isStreaming = true;
     const historyContext = session.messages.map(m => ({ text: m.text, sender: m.sender }));
-    const ragResult = ragEngine.processQuery(queryText, historyContext);
+    const ragResult = await ragEngine.processQuery(queryText, historyContext);
 
     // 3. Append Assistant Placeholder
     const assistantMsg = {
