@@ -194,12 +194,12 @@ export class ChatUI {
     container.className = "action-card-container";
 
     let html = "";
-    if (actionType === "CONFIRM_DELETE_SINGLE" || actionType === "CONFIRM_DELETE_MULTI") {
+    if (actionType === "CONFIRM_DELETE_SINGLE" || actionType === "CONFIRM_DELETE_MULTI" || actionType === "DELETE_RESOURCE") {
       const isMulti = Array.isArray(actionData);
       html = `
         <div class="action-card">
           <h4>⚠️ Confirm Deletion</h4>
-          <p>${isMulti ? `Delete ${actionData.length} items.` : `Delete: ${this.escapeHtml(actionData.title)}`}</p>
+          <p>${isMulti ? `Delete ${actionData.length} items.` : `Delete resource: ${this.escapeHtml(actionData.query || actionData.title || 'Unknown')}`}</p>
           <div class="action-card-buttons">
             <button class="btn-action-card accept" data-command="accept">🟢 Accept</button>
             <button class="btn-action-card reject" data-command="reject">🔴 Reject</button>
@@ -207,7 +207,7 @@ export class ChatUI {
           </div>
         </div>
       `;
-    } else if (actionType === "CONFIRM_SAVE" || actionType === "CONFIRM_SAVE_NEW") {
+    } else if (actionType === "CONFIRM_SAVE" || actionType === "CONFIRM_SAVE_NEW" || actionType === "ADD_RESOURCE") {
       const resources = Array.isArray(actionData) ? actionData : [actionData];
       
       let resourceHtml = resources.map((res, index) => `
@@ -216,7 +216,7 @@ export class ChatUI {
           <div style="display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 4px; align-items: center; width: 100%;">
             <span style="color: var(--text-muted);">Website</span> <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(res.websiteName || "Web")}</span>
             <span style="color: var(--text-muted);">Title</span> <input type="text" class="edit-title" value="${this.escapeHtml(res.title || "Auto Generated")}" style="width: 100%; min-width: 0; box-sizing: border-box; padding: 4px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px;">
-            <span style="color: var(--text-muted);">URL</span> <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a href="${this.escapeHtml(res.url)}" target="_blank" style="color: var(--accent-blue);">${this.escapeHtml(res.url)}</a></span>
+            <span style="color: var(--text-muted);">URL</span> <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a href="${this.escapeHtml(res.url || '')}" target="_blank" style="color: var(--accent-blue);">${this.escapeHtml(res.url || '')}</a></span>
             <span style="color: var(--text-muted);">Purpose</span> <input type="text" class="edit-purpose" value="${this.escapeHtml(res.purpose || "-")}" style="width: 100%; min-width: 0; box-sizing: border-box; padding: 4px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px;">
             <span style="color: var(--text-muted);">Category</span> <input type="text" class="edit-category" value="${this.escapeHtml(res.category || "-")}" style="width: 100%; min-width: 0; box-sizing: border-box; padding: 4px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px;">
             <span style="color: var(--text-muted);">Summary</span> <input type="text" class="edit-summary" value="${this.escapeHtml(res.summary || "-")}" style="width: 100%; min-width: 0; box-sizing: border-box; padding: 4px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; font-style: italic;">
@@ -238,6 +238,17 @@ export class ChatUI {
             <button class="btn-action-card modify" data-command="modify">🟡 Modify</button>
             <button class="btn-action-card preview" data-command="preview">🔵 Preview</button>
             <button class="btn-action-card reject" data-command="reject">🔴 Cancel</button>
+          </div>
+        </div>
+      `;
+    } else if (actionType === "CREATE_PURPOSE") {
+      html = `
+        <div class="action-card">
+          <h4>🎯 Confirm New Purpose</h4>
+          <p>Create Purpose: <strong>${this.escapeHtml(actionData.name)}</strong></p>
+          <div class="action-card-buttons">
+            <button class="btn-action-card accept" data-command="accept">🟢 Accept</button>
+            <button class="btn-action-card reject" data-command="reject">🔴 Reject</button>
           </div>
         </div>
       `;

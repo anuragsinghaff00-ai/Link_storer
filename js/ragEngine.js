@@ -29,7 +29,9 @@ export class RAGEngine {
         },
         body: JSON.stringify({
           query: query,
-          history: conversationHistory
+          history: conversationHistory,
+          state: this.state,
+          actionData: this.pendingActionData
         })
       });
 
@@ -40,8 +42,15 @@ export class RAGEngine {
       const data = await response.json();
       
       // Update local state if the backend returned a new state
-      if (data.state) this.state = data.state;
-      if (data.actionData) this.pendingActionData = data.actionData;
+      if (data.state) {
+        this.state = data.state;
+      }
+      // Keep action data if it's awaiting confirmation, clear if idle
+      if (data.state === "IDLE") {
+        this.pendingActionData = null;
+      } else if (data.actionData !== undefined) {
+        this.pendingActionData = data.actionData;
+      }
 
       return data;
     } catch (e) {
