@@ -127,14 +127,41 @@ class JarvisAgent:
                             }
                             return
                         else:
-                            # Safe execution (like search)
-                            # In a full flow, we'd feed this back to OpenAI to summarize. 
-                            # For now, we return the result directly.
+                            # Safe execution (like search). Feed result back to OpenAI to summarize.
+                            messages.append({
+                                "role": "assistant",
+                                "content": None,
+                                "tool_calls": [{
+                                    "id": tc["id"],
+                                    "type": "function",
+                                    "function": {
+                                        "name": tool_name,
+                                        "arguments": tc["arguments"]
+                                    }
+                                }]
+                            })
+                            messages.append({
+                                "role": "tool",
+                                "tool_call_id": tc["id"],
+                                "name": tool_name,
+                                "content": json.dumps(result.get("resources", result.get("message", "Success")))
+                            })
+                            
+                            yield {"type": "status", "content": "Summarizing..."}
+                            
+                            # Stream the follow-up response from OpenAI
+                            follow_up_stream = self.llm.stream_chat(messages, tools=tools)
+                            summary_text = ""
+                            async for followup_chunk in follow_up_stream:
+                                if followup_chunk["type"] == "content":
+                                    summary_text += followup_chunk["content"]
+                                    yield {"type": "chunk", "content": followup_chunk["content"]}
+                                    
                             yield {
                                 "type": "result",
                                 "state": "IDLE",
                                 "actionData": None,
-                                "text": result.get("message", "Here are the results."),
+                                "text": "", # text was already streamed in chunks
                                 "resources": result.get("resources", [])
                             }
                             return
@@ -144,7 +171,7 @@ class JarvisAgent:
                 "type": "result",
                 "state": "IDLE",
                 "actionData": None,
-                "text": full_text,
+                "text": "", # text was already streamed in chunks
                 "resources": []
             }
             
