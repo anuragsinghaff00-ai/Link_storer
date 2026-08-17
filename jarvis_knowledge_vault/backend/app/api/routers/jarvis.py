@@ -14,11 +14,13 @@ router = APIRouter(
 
 from app.core.agent import JarvisAgent
 
+from typing import Dict, Any, List, Optional
+
 class ChatRequest(BaseModel):
     query: str
     history: List[Dict[str, Any]] = []
     state: str = "IDLE"
-    actionData: Dict[str, Any] = None
+    actionData: Optional[Dict[str, Any]] = None
 
 from fastapi.responses import StreamingResponse
 import json

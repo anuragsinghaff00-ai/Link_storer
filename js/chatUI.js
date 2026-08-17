@@ -134,7 +134,7 @@ export class ChatUI {
     const textSpan = bubble.querySelector(".streaming-text");
     const content = bubble.querySelector(".bubble-content");
     const statusSpan = bubble.querySelector(".status-indicator");
-    const readAloudBtn = bubble.getElementById(readAloudBtnId);
+    const readAloudBtn = bubble.querySelector(`#${readAloudBtnId}`);
     containerEl.appendChild(bubble);
     containerEl.scrollTop = containerEl.scrollHeight;
 
