@@ -15,12 +15,7 @@ export class RAGEngine {
     this.pendingActionData = null;
   }
 
-  /**
-   * Main RAG Query Processor (Proxy to Backend)
-   * @param {string} query User prompt
-   * @param {Array} conversationHistory Past chat turn context
-   */
-  async processQuery(query, conversationHistory = []) {
+  async processQueryStream(query, conversationHistory, onEvent) {
     try {
       const response = await fetch(this.apiBase, {
         method: "POST",
@@ -39,27 +34,49 @@ export class RAGEngine {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      
-      // Update local state if the backend returned a new state
-      if (data.state) {
-        this.state = data.state;
-      }
-      // Keep action data if it's awaiting confirmation, clear if idle
-      if (data.state === "IDLE") {
-        this.pendingActionData = null;
-      } else if (data.actionData !== undefined) {
-        this.pendingActionData = data.actionData;
-      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
 
-      return data;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop(); // keep incomplete chunk in buffer
+        
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6);
+            try {
+              const event = JSON.parse(dataStr);
+              
+              if (event.type === "result") {
+                if (event.state) this.state = event.state;
+                if (event.state === "IDLE") {
+                  this.pendingActionData = null;
+                } else if (event.actionData !== undefined) {
+                  this.pendingActionData = event.actionData;
+                }
+              }
+              
+              if (onEvent) onEvent(event);
+            } catch (e) {
+              console.error("Failed to parse SSE event:", e, dataStr);
+            }
+          }
+        }
+      }
     } catch (e) {
       console.error("Failed to reach Jarvis Agent:", e);
-      return {
-        text: "I am having trouble connecting to my brain (the Backend Agent Layer). Please ensure the FastAPI server is running.",
-        resources: [],
-        citations: []
-      };
+      if (onEvent) {
+        onEvent({
+          type: "error",
+          content: "Jarvis AI is temporarily unavailable."
+        });
+      }
     }
   }
 }

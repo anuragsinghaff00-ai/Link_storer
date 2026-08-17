@@ -111,32 +111,96 @@ export class ChatUI {
 
     this.renderMessageBubble(userMsg, containerEl);
 
-    // 2. Process query via RAG Engine
+    // 2. Prepare Assistant Bubble
     this.isStreaming = true;
     const historyContext = session.messages.map(m => ({ text: m.text, sender: m.sender }));
-    const ragResult = await ragEngine.processQuery(queryText, historyContext);
+    
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble assistant-bubble";
+    
+    const readAloudBtnId = "read-aloud-" + Date.now();
+    bubble.innerHTML = `
+      <div class="bubble-header">
+        <span class="bubble-avatar">⚡</span> 
+        <strong>Jarvis</strong>
+        <span class="status-indicator" style="font-size: 0.8rem; color: var(--text-muted); margin-left: 10px;">Thinking...</span>
+        <button class="btn-read-aloud" id="${readAloudBtnId}" title="Read Aloud" style="display:none;" data-text="">🔊</button>
+      </div>
+      <div class="bubble-content markdown-body">
+        <div class="streaming-text"></div>
+      </div>
+    `;
 
-    // 3. Append Assistant Placeholder
+    const textSpan = bubble.querySelector(".streaming-text");
+    const content = bubble.querySelector(".bubble-content");
+    const statusSpan = bubble.querySelector(".status-indicator");
+    const readAloudBtn = bubble.getElementById(readAloudBtnId);
+    containerEl.appendChild(bubble);
+    containerEl.scrollTop = containerEl.scrollHeight;
+
+    let assistantFullText = "";
+    let finalActionType = null;
+    let finalActionData = null;
+    let finalResources = [];
+    
+    await ragEngine.processQueryStream(queryText, historyContext, (event) => {
+      if (event.type === "status") {
+        statusSpan.innerText = event.content;
+      } else if (event.type === "chunk") {
+        statusSpan.innerText = "Generating...";
+        assistantFullText += event.content;
+        textSpan.innerHTML = this.formatMarkdown(assistantFullText);
+        containerEl.scrollTop = containerEl.scrollHeight;
+      } else if (event.type === "result") {
+        statusSpan.innerText = "";
+        if (event.text) {
+            assistantFullText += event.text;
+            textSpan.innerHTML = this.formatMarkdown(assistantFullText);
+        }
+        
+        finalActionType = event.state === "AWAITING_CONFIRMATION" ? (event.actionData?.action || null) : null;
+        finalActionData = event.actionData;
+        finalResources = event.resources || [];
+        
+        // Render Action Cards
+        if (finalActionType) {
+          content.appendChild(this.renderActionCard(finalActionType, finalActionData));
+        }
+        
+        // Render Resources
+        if (finalResources && finalResources.length > 0) {
+          const cardSection = this.renderResourceCardsSection(finalResources, event.usefulNotes || []);
+          content.appendChild(cardSection);
+        }
+        
+        // Citations / FollowUps omitted for brevity in stream end block, can be added if needed
+        containerEl.scrollTop = containerEl.scrollHeight;
+      } else if (event.type === "error") {
+        statusSpan.innerText = "Error";
+        assistantFullText += `\n\n**Error:** ${event.content}`;
+        textSpan.innerHTML = this.formatMarkdown(assistantFullText);
+      }
+    });
+
     const assistantMsg = {
       sender: "assistant",
-      text: ragResult.text,
-      resources: ragResult.resources || [],
-      usefulNotes: ragResult.usefulNotes || [],
-      citations: ragResult.citations || [],
-      followUps: ragResult.followUps || [],
-      actionType: ragResult.actionType || null,
-      actionData: ragResult.actionData || null,
+      text: assistantFullText,
+      resources: finalResources,
+      actionType: finalActionType,
+      actionData: finalActionData,
       timestamp: new Date().toISOString()
     };
+    
+    // Enable Read Aloud now that stream is done
+    if (readAloudBtn) {
+        readAloudBtn.dataset.text = encodeURIComponent(assistantFullText);
+        readAloudBtn.style.display = 'inline-block';
+    }
 
     session.messages.push(assistantMsg);
     this.saveSessions();
-
-    // Stream text output
-    await this.renderAssistantStream(assistantMsg, containerEl);
     this.isStreaming = false;
 
-    // Speak response if voiceEngine exists globally
     if (window.voiceEngine) {
       window.voiceEngine.speak(assistantMsg.text);
     }

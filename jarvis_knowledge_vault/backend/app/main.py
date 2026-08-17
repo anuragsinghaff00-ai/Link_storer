@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
-from app.api.routers import images, image_ai, resources, jarvis
+from app.api.routers import images, image_ai, resources, jarvis, ai
 from app.core.database import engine
 from app.models import Base
 
@@ -38,6 +38,7 @@ app.include_router(images.router, prefix="/api")
 app.include_router(image_ai.router, prefix="/api")
 app.include_router(resources.router, prefix="/api")
 app.include_router(jarvis.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
 
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 
